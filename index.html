@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الكات كافيه | لوحة تسجيل الحضور الاحترافية (نمط النيون)</title>
+    <style>
+        /* **************************************** */
+        /* 🚨 الأنماط الأساسية (الخلفية الداكنة والنيون) */
+        /* **************************************** */
+        :root {
+            --bg-dark: #121212;
+            --main-text: #e0e0e0;
+            --neon-green: #2ecc71;
+            --neon-red: #e74c3c;
+            --neon-blue: #3498db;
+            --neon-orange: #f39c12;
+            --neon-cyan: #1abc9c;
+            --glow-color: rgba(52, 152, 219, 0.4); 
+            --secondary-dark: #1f1f1f;
+        }
+
+        body {
+            font-family: 'Arial', Tahoma, sans-serif;
+            background-color: var(--bg-dark); 
+            color: var(--main-text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 50px;
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 25px 25px;
+        }
+
+        .system-container {
+            width: 95%;
+            max-width: 1200px;
+            background: var(--secondary-dark); 
+            border-radius: 15px;
+            box-shadow: 0 0 20px var(--glow-color), 0 0 10px rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border: 3px solid var(--neon-blue); 
+            position: relative; 
+        }
+
+        /* **************************************** */
+        /* زر تسجيل الدخول العائم */
+        /* **************************************** */
+        #openLoginModalBtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 15px 20px;
+            background: var(--neon-orange); 
+            color: var(--bg-dark); 
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px var(--neon-orange);
+            z-index: 10;
+        }
+        #openLoginModalBtn:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        h1 {
+            color: var(--neon-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--neon-orange);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 5px var(--neon-blue);
+            padding-top: 50px; 
+        }
+        
+        #statusDisplay {
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 25px;
+            background: #252525;
+            border-radius: 10px;
+            border: 1px solid var(--neon-orange);
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.3);
+        }
+
+        #clock {
+            font-size: 40px;
+            font-weight: bold;
+            color: #76ff03; 
+            text-shadow: 0 0 10px #76ff03;
+            letter-spacing: 2px;
+        }
+        
+        #catStatus {
+            font-size: 50px;
+            margin: 10px 0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        /* حقول الإدخال */
+        .login-content input {
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 2px solid var(--neon-blue);
+            background: #181818;
+            color: var(--main-text);
+            text-align: center;
+            font-size: 16px;
+            width: 180px; 
+            transition: all 0.3s;
+            margin-bottom: 15px; 
+        }
+        .login-content input:focus {
+             outline: none;
+             border-color: var(--neon-cyan);
+             box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        /* الأزرار العامة */
+        .controls button, .login-content button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        .controls button:hover, .login-content button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        /* الأزرار الملونة */
+        .login-btn { background: var(--neon-green); color: var(--bg-dark); box-shadow: 0 0 10px var(--neon-green); }
+        .logout-btn { background: var(--neon-red); color: var(--bg-dark); box-shadow: 0 0 10px var(--neon-red); }
+        .show-status { background: #9b59b6; color: var(--main-text); box-shadow: 0 0 10px #9b59b6; }
+        .menu-button { 
+            background: var(--neon-cyan); 
+            color: var(--bg-dark); 
+            box-shadow: 0 0 15px var(--neon-cyan); 
+            padding: 18px 40px; 
+        }
+        
+        /* **************************************** */
+        /* 🚨 قائمة الحضور (#attendanceList) */
+        /* **************************************** */
+        #attendanceList {
+            margin-top: 30px;
+            padding: 20px;
+            background: #222222; 
+            color: var(--main-text);
+            border-radius: 10px;
+            display: none;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); 
+        }
+        
+        .list-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1.5fr 3fr 1fr; 
+            gap: 15px;
+            padding: 12px 0;
+            text-align: right;
+            align-items: center;
+            font-weight: bold;
+            color: var(--bg-dark);
+            background: linear-gradient(90deg, var(--neon-cyan) 0%, #3498db 100%); 
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .staff-record {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1.5fr 3fr 1fr; 
+            gap: 15px;
+            padding: 15px;
+            text-align: right;
+            align-items: center;
+            border-bottom: 1px dashed #3a3a3a; 
+            transition: background-color 0.2s, transform 0.2s;
+            border-left: 3px solid transparent; 
+        }
+        .staff-record:hover {
+            background-color: #2a2a2a; 
+            border-left-color: var(--neon-orange);
+        }
+        
+        .status-badge {
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 15px; 
+            text-align: center;
+            white-space: nowrap;
+            display: inline-block;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .online-status { 
+            background-color: var(--neon-green); 
+            color: var(--bg-dark); 
+            box-shadow: 0 0 8px var(--neon-green); 
+        }
+        .offline-status { 
+            background-color: var(--neon-red); 
+            color: var(--bg-dark); 
+            box-shadow: 0 0 8px var(--neon-red); 
+        }
+        .time-stamp {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* **************************************** */
+        /* أنماط المودال (النافذة المنبثقة) */
+        /* **************************************** */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 20; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.7); 
+            padding-top: 50px;
+        }
+        
+        .modal-content {
+            background-color: #0d0d0d; 
+            margin: 10% auto; 
+            padding: 40px;
+            border: 4px solid var(--neon-cyan);
+            width: 90%; 
+            max-width: 800px; 
+            border-radius: 15px;
+            box-shadow: 0 0 40px var(--neon-cyan); 
+            animation: fadeIn 0.3s;
+        }
+        
+        /* 🚨 قائمة المطعم (المنيو) */
+        .menu-table {
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 20px;
+            text-align: right;
+            box-shadow: 0 0 25px rgba(26, 188, 156, 0.5); 
+            border-radius: 10px;
+            overflow: hidden; 
+        }
+        .menu-table th, .menu-table td {
+            padding: 15px;
+            font-size: 16px;
+            border-bottom: 1px solid #333; 
+            border-right: 1px solid #333;
+        }
+        .menu-table th {
+            background-color: #1a1a1a; 
+            color: var(--neon-cyan);
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 2px solid var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+        }
+        .menu-table td {
+            background-color: #121212;
+            color: var(--main-text);
+            text-align: center;
+        }
+        .menu-table tr:nth-child(even) td {
+            background-color: #181818; 
+        }
+        .menu-table td:first-child { 
+            text-align: right;
+            font-weight: bold;
+            color: var(--neon-blue);
+            border-left: 5px solid var(--neon-blue); 
+        }
+        .menu-table td:nth-child(2) { 
+            font-style: italic;
+            color: var(--neon-orange);
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(243, 156, 18, 0.5);
+        }
+        .menu-table td:nth-child(3) { 
+            color: #ccc;
+        }
+        .menu-table td:nth-child(4) { 
+            color: var(--neon-green); 
+            font-weight: bold;
+            text-shadow: 0 0 3px var(--neon-green);
+        }
+
+        /* أنماط مودال الدخول */
+        .login-content {
+            background-color: #0d0d0d; 
+            margin: 10% auto; 
+            padding: 30px;
+            border: 4px solid var(--neon-orange);
+            width: 90%; 
+            max-width: 400px; 
+            border-radius: 15px;
+            box-shadow: 0 0 30px var(--neon-orange); 
+            text-align: center;
+        }
+        
+        .close-button {
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            color: var(--neon-red);
+        }
+
+        .login-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="system-container">
+    
+    <button id="openLoginModalBtn" onclick="openLoginModal()">لتسجيل الدخول، اضغط هنا (للموظفين فقط) 🔑</button>
+
+    <h1>⏱️ جهاز تسجيل الحضور والانصراف | الكات كافيه (Dark Mode)</h1>
+    
+    <div id="catStatus" style="text-align: center;">
+        <span id="catIcon">🐈</span> 
+    </div>
+    
+    <div id="statusDisplay">
+        <div id="clock">11:06:30 PM</div>
+        <div id="shiftStatus" style="color: var(--neon-orange); font-weight: bold; margin-top: 5px;">أدخل بيانات الدخول لتسجيل الدوام.</div>
+    </div>
+    
+    <div class="controls">
+        <button class="show-status" onclick="toggleAttendanceList()">عرض الحضور 📑</button>
+        <button class="menu-button" onclick="openMenuModal()">فتح قائمة المنيو ☕</button>
+    </div>
+
+    <div id="statusMessage" style="text-align:center; font-size: 18px; color: var(--neon-red); margin-bottom: 20px;">
+    </div>
+    
+    <div id="attendanceList">
+        <h2>📊 حالة حضور الكادر الحالي</h2>
+        
+        <div class="list-header">
+            <span>الرتبة الإدارية</span>
+            <span>اسم الموظف في اللعبة</span>
+            <span>الحالة</span>
+            <span>مدة الدوام</span> 
+            <span>وقت التسجيل</span> 
+            <span>الجوال/PIN</span>
+        </div>
+        
+        <div id="recordsContainer">
+        </div>
+    </div>
+</div>
+
+<div id="loginModal" class="modal">
+    <div class="login-content">
+        <span class="close-button" onclick="closeLoginModal()">&times;</span>
+        <h2 style="color: var(--neon-orange); margin-bottom: 20px;">تسجيل الدوام</h2>
+        
+        <input type="text" id="staffNameInput" placeholder="أدخل اسمك الكامل" required>
+        <input type="password" id="staffPinInput" placeholder="أدخل كلمة المرور" required>
+        
+        <div class="login-controls">
+            <button class="login-btn" onclick="handleAttendance(true)">تسجيل دخول 🟢</button> 
+            <button class="logout-btn" onclick="handleAttendance(false)">تسجيل خروج 🔴</button>
+        </div>
+
+        <div id="loginStatus" style="color: var(--neon-red); margin-top: 15px;"></div>
+    </div>
+</div>
+
+<div id="menuModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeMenuModal()">&times;</span>
+        <h2 style="text-align: center; color: var(--neon-cyan); text-shadow: 0 0 5px var(--neon-cyan);">📋 قائمة طعام "الكات كافيه" - الشاشة الرقمية</h2>
+        
+        <table class="menu-table">
+            <thead>
+                <tr>
+                    <th>الخيار</th>
+                    <th>السعر (ريال)</th>
+                    <th>السعرات الحرارية (كيلو كالوري)</th>
+                    <th>مدة الجري للحرق (تقريبي)</th> 
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>عصير كفوف القط (ليمون ونعناع)</td>
+                    <td>25</td>
+                    <td>120 سعرة</td>
+                    <td>12 دقيقة</td> 
+                </tr>
+                <tr>
+                    <td>لاتيه النعناع (Catnip Latte)</td>
+                    <td>30</td>
+                    <td>180 سعرة</td>
+                    <td>18 دقيقة</td>
+                </tr>
+                <tr>
+                    <td>كعكة الماوس (كيك بالشوكولاتة)</td>
+                    <td>45</td>
+                    <td>450 سعرة</td>
+                    <td>45 دقيقة</td>
+                </tr>
+                <tr>
+                    <td>شاي الأعشاب الهادئ (Herbal Calm)</td>
+                    <td>15</td>
+                    <td>5 سعرات</td>
+                    <td>أقل من دقيقة (30 ثانية)</td>
+                </tr>
+                <tr>
+                    <td>شطيرة سمك السلمون (Salmon Sandwich)</td>
+                    <td>55</td>
+                    <td>320 سعرة</td>
+                    <td>32 دقيقة</td>
+                </tr>
+                <tr>
+                    <td>ماء القطط (ماء صحي)</td>
+                    <td>10</td>
+                    <td>0 سعرة</td>
+                    <td>0 دقيقة</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="font-size: 12px; margin-top: 15px; text-align: center; color: #888;">
+            ملحوظة: مدة الجري محسوبة على أساس حرق 100 سعرة حرارية لكل 10 دقائق من الجري المتوسط.
+        </p>
+    </div>
+</div>
+<script>
+    // *****************************************************************
+    // 1. رابط Discord Webhook 
+    // *****************************************************************
+    const webhookURL = "https://ptb.discord.com/api/webhooks/1445859953549246646/NyvDE_Pm0azdTedgT9zbEC6Nc7jNS8xJU6myVdr-LHGDbdJfpuvBl153nh7vn3Kscpn";
+    
+    // 🚨 تم حذف const ADMIN_PIN = '33';
+
+    // 2. قائمة الموظفين 
+    const staffData = [
+        { name: ' Scot robert', rank: 'Cafe Manager', phone: '11', secretPin: '33' }, 
+        { name: 'Rami Ghazaleh', rank: 'New Barista', phone: '9999', secretPin: '1122' }, // الموظف الجديد المطلوب
+        { name: 'Abo Hamed', rank: 'Cat Care Specialist', phone: '0001', secretPin: '1234' },
+        { name: 'hisham baeshen', rank: 'Security Supervisor', phone: '0002', secretPin: '4321' },
+        { name: 'SAUD SNGOR', rank: 'Inventory Controller', phone: '0003', secretPin: '1020' },
+        { name: 'Yazeed AlGhamdi', rank: 'Kitchen Manager', phone: '0004', secretPin: '3040' },
+        { name: 'Abu ahmed', rank: 'Customer Relations', phone: '0005', secretPin: '5060' },
+        { name: 'Lux', rank: 'Delivery Coordinator', phone: '0006', secretPin: '6070' },
+        { name: 'Dazal', rank: 'Cafe Engineer', phone: '0007', secretPin: '7080' },
+        { name: 'Abo Waleed', rank: 'Barista Chief', phone: '0008', secretPin: '8090' }, 
+        { name: 'Marcus Kane', rank: 'Human Resources', phone: '0009', secretPin: '9000' },
+        { name: 'Atiya Lolo', rank: 'Quality Assurance', phone: '0010', secretPin: '1000' },
+    ];
+    
+    // *****************************************************************
+    // الدوال المساعدة 
+    // *****************************************************************
+    function getStaffState(identifier) {
+        const key = `catcafe_staff_${identifier}`; 
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : { isOnline: false, loginTime: null, phone: null };
+    }
+
+    function setStaffState(identifier, state) {
+        const key = `catcafe_staff_${identifier}`;
+        localStorage.setItem(key, JSON.stringify(state));
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        document.getElementById('clock').textContent = timeString;
+    }
+    setInterval(updateClock, 1000); 
+
+    function getElapsedTime(loginTime, returnString = true) {
+        if (!loginTime) return returnString ? '---' : { hours: 0, minutes: 0, seconds: 0 };
+        
+        const totalElapsed = Date.now() - loginTime;
+        const totalSeconds = Math.floor(totalElapsed / 1000);
+        
+        if (totalSeconds < 0) return returnString ? '00:00:00' : { hours: 0, minutes: 0, seconds: 0 };
+
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60; 
+
+        if (!returnString) {
+             return { hours, minutes, seconds }; 
+        }
+
+        const displayHours = String(hours).padStart(2, '0');
+        const displayMinutes = String(minutes).padStart(2, '0');
+        const displaySeconds = String(seconds).padStart(2, '0');
+
+        return `${displayHours}:${displayMinutes}:${displaySeconds}`;
+    }
+
+    function formatLoginTime(loginTime) {
+        if (!loginTime) return '---';
+        const date = new Date(loginTime);
+        const dateString = date.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit' });
+        const timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return `${dateString} ${timeString}`;
+    }
+
+    function updateAttendanceRecords() {
+        const container = document.getElementById("recordsContainer");
+        container.innerHTML = ''; 
+        
+        staffData.forEach(staff => {
+            const state = getStaffState(staff.name); 
+            
+            let statusClass, statusText;
+            statusClass = state.isOnline ? 'online-status' : 'offline-status';
+            statusText = state.isOnline ? 'متصل 🟢' : 'غير متصل 🔴';
+            
+            const elapsedTime = state.isOnline ? getElapsedTime(state.loginTime) : '---';
+            const loginTimestamp = state.isOnline ? formatLoginTime(state.loginTime) : '---';
+            
+            const record = document.createElement('div');
+            record.className = 'staff-record';
+            record.innerHTML = `
+                <span>${staff.rank}</span>
+                <span>${staff.name}</span>
+                <span><div class="status-badge ${statusClass}">${statusText}</div></span>
+                <span>${elapsedTime}</span>
+                <span class="time-stamp">${loginTimestamp}</span>
+                <span>📞 ${staff.phone}</span>
+            `;
+            container.appendChild(record);
+        });
+    }
+    setInterval(updateAttendanceRecords, 10000); 
+
+    function sendToDiscord(staff, action, color, duration = null, isForced = false) {
+        const timestamp = new Date().toISOString();
+        let title = '';
+        let statusIcon = '';
+        
+        // 🚨 تم إزالة reference لـ isForced
+        const fields = [
+             { name: "الرتبة", value: staff.rank, inline: true },
+             { name: "الجوال (PIN)", value: staff.phone, inline: true }
+        ];
+
+        if (action === 'دخول') {
+            title = '🟢 تسجيل دخول';
+            statusIcon = '✅';
+        } else if (action === 'خروج') {
+            title = '🔴 تسجيل خروج'; 
+            statusIcon = '❌';
+        }
+        
+        if (duration) {
+             fields.push({
+                name: "مدة النوبة الصافية",
+                value: `${duration.hours} س و ${duration.minutes} د و ${duration.seconds} ث`,
+                inline: false
+            });
+        }
+        fields.push({
+             name: 'وقت التسجيل',
+             value: formatLoginTime(Date.now()),
+             inline: false
+        });
+
+
+        const embed = {
+            title: title,
+            description: `**${staff.name}** قام بـ ${action}.`,
+            color: color, 
+            timestamp: timestamp,
+            footer: {
+                text: `الكات كافيه | نظام الحضور الآلي ${statusIcon}`
+            },
+            fields: fields
+        };
+
+        fetch(webhookURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ embeds: [embed] }) 
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error("❌ فشل إرسال الويب هوك. حالة: " + response.status);
+            } else {
+                 console.log(`✅ تم إرسال إشعار ${action} بنجاح.`);
+            }
+        })
+        .catch(error => {
+            console.error("❌ خطأ في الاتصال بالشبكة:", error);
+        });
+    }
+
+    // *****************************************************************
+    // دوال المودال والدخول 
+    // *****************************************************************
+    function openLoginModal() {
+        document.getElementById("loginModal").style.display = "block";
+        document.getElementById("loginStatus").textContent = ""; 
+    }
+
+    function closeLoginModal() {
+        document.getElementById("loginModal").style.display = "none";
+        document.getElementById("staffNameInput").value = "";
+        document.getElementById("staffPinInput").value = "";
+    }
+
+    function handleAttendance(isLoggedIn) {
+        const nameInput = document.getElementById("staffNameInput").value.trim();
+        const pinInput = document.getElementById("staffPinInput").value.trim();
+        const loginStatus = document.getElementById("loginStatus");
+        const statusMessage = document.getElementById("statusMessage");
+        const catIcon = document.getElementById("catIcon"); 
+
+        if (nameInput === "" || pinInput === "") {
+             loginStatus.textContent = `⚠️ يرجى إدخال الاسم وكلمة المرور معًا.`;
+             loginStatus.style.color = '#FF5722';
+             return;
+        }
+        
+        const staff = staffData.find(s => s.name === nameInput && s.secretPin === pinInput);
+        
+        if (!staff) {
+            loginStatus.textContent = `❌ فشل الدخول: بيانات الاسم أو كلمة المرور غير صحيحة.`;
+            loginStatus.style.color = '#e74c3c';
+            return; 
+        }
+
+        const currentState = getStaffState(staff.name);
+        
+        if (currentState.isOnline === isLoggedIn) {
+            const action = isLoggedIn ? 'دخول' : 'خروج';
+            loginStatus.textContent = `⚠️ الموظف ${staff.name} مسجل ${action} مسبقاً!`;
+            loginStatus.style.color = '#FF5722';
+            return;
+        }
+
+        const successColor = 0x2ECC71; 
+        const failureColor = 0xE74C3C; 
+
+        const newState = { ...currentState, isOnline: isLoggedIn, phone: staff.phone }; 
+        const action = isLoggedIn ? 'دخول' : 'خروج';
+        const color = isLoggedIn ? successColor : failureColor;
+        let shiftDuration = null; 
+
+        if (isLoggedIn) {
+            newState.loginTime = Date.now();
+            catIcon.textContent = '👤'; 
+            statusMessage.textContent = `${staff.name}: تم تسجيل ${action} بنجاح.`;
+        } else {
+            if (currentState.loginTime) {
+                const elapsedData = getElapsedTime(currentState.loginTime, false);
+                shiftDuration = elapsedData;
+                
+                statusMessage.textContent = `${staff.name}: تم تسجيل الخروج بنجاح. مدة العمل الصافية: ${shiftDuration.hours} س و ${shiftDuration.minutes} د و ${shiftDuration.seconds} ث.`;
+            } else {
+                statusMessage.textContent = `${staff.name}: تم تسجيل الخروج بنجاح. (لم يتم العثور على وقت الدخول).`;
+            }
+
+            newState.loginTime = null;
+            catIcon.textContent = '⏱️';
+        }
+
+        setStaffState(staff.name, newState); 
+        updateAttendanceRecords(); 
+        
+        statusMessage.style.color = isLoggedIn ? '#2ecc71' : '#e74c3c';
+        closeLoginModal(); 
+        loginStatus.textContent = ""; 
+        
+        sendToDiscord(staff, action, color, shiftDuration, false); // false لأنه ليس خروجاً إجبارياً
+    }
+    
+    // 🚨 تم حذف دالة forceLogout() بالكامل
+
+
+    function openMenuModal() {
+        document.getElementById("menuModal").style.display = "block";
+    }
+
+    function closeMenuModal() {
+        document.getElementById("menuModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        const menuModal = document.getElementById("menuModal");
+        const loginModal = document.getElementById("loginModal");
+        if (event.target == menuModal) {
+            menuModal.style.display = "none";
+        }
+        if (event.target == loginModal) {
+            loginModal.style.display = "none";
+        }
+    }
+
+    function toggleAttendanceList() {
+        const listContainer = document.getElementById("attendanceList");
+        const isHidden = listContainer.style.display === 'none' || listContainer.style.display === '';
+
+        if (isHidden) {
+            listContainer.style.display = 'block';
+            updateAttendanceRecords();
+        } else {
+            listContainer.style.display = 'none';
+        }
+    }
+
+    // تهيئة اللوحة عند التحميل
+    document.addEventListener('DOMContentLoaded', () => {
+        updateClock();
+        updateAttendanceRecords();
+    });
+</script>
+
+</body>
+</html>
