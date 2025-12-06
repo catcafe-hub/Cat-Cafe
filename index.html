@@ -226,6 +226,16 @@ const staff = [
     { username: "saleh", password: "0000", rank: "Quality Assurance", phone: "(602) 735-9109" },
 ];
 
+// ------------------------------------
+// 💡 إعدادات التسجيل الدائم (جديد) 💡
+// ------------------------------------
+// أدخل اسم مستخدم واحد للحفاظ على حالته "دائمًا متصل" بغض النظر عن محاولات تسجيل الخروج اليدوية.
+const PERMANENT_LOGIN_USER = "bandr";
+
+// أدخل اسم مستخدم واحد للحفاظ على حالته "دائمًا غير متصل" بغض النظر عن محاولات تسجيل الدخول اليدوية.
+const PERMANENT_LOGOUT_USER = "Lux"; 
+// ------------------------------------
+
 // -----------------------
 // حالة الحضور (تُخزن في localStorage)
 // -----------------------
@@ -236,15 +246,24 @@ const WEBHOOK_URL = "https://ptb.discord.com/api/webhooks/1446095428977299558/_T
 function loadStates() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        // التعديل هنا: إذا لم يتم العثور على بيانات، نبدأ بكائن فارغ (states={})
+        if (!raw) {
+            states = {};
+            return;
+        }
+        
         const parsed = JSON.parse(raw);
-        Object.keys(parsed).forEach(k => {
-            const userState = parsed[k];
-            const exists = staff.find(s => s.username === k);
-            if (exists) states[k] = userState;
-        });
+        // التحقق من أن parsed هو كائن قبل الدمج
+        if (typeof parsed === 'object' && parsed !== null) {
+            Object.keys(parsed).forEach(k => {
+                const userState = parsed[k];
+                const exists = staff.find(s => s.username === k);
+                if (exists) states[k] = userState;
+            });
+        }
     } catch (e) {
         console.error("فشل استعادة الحالات:", e);
+        states = {}; // إعادة تعيين في حالة وجود خطأ
     }
 }
 
@@ -299,6 +318,13 @@ function login() {
         statusEl.innerText = '❌ اسم المستخدم أو كلمة المرور غير صحيحة';
         return;
     }
+    
+    // 🚨 منع التسجيل إذا كان المستخدم مُعينًا للتسجيل الدائم للخروج
+    if (uname === PERMANENT_LOGOUT_USER) {
+        statusEl.style.color = 'red';
+        statusEl.innerText = `❌ المستخدم ${uname} مُعين للتسجيل الخروج الدائم ولا يمكنه تسجيل الدخول يدويًا.`;
+        return;
+    }
 
     if (states[uname] && states[uname].status === 'online') {
         statusEl.style.color = 'orange';
@@ -340,6 +366,13 @@ function logout() {
         statusEl.innerText = `⚠️ ${uname} ليس مسجلاً دخول حاليًا`;
         return;
     }
+    
+    // 🚨 منع التسجيل إذا كان المستخدم مُعينًا للتسجيل الدائم للدخول
+    if (uname === PERMANENT_LOGIN_USER) {
+        statusEl.style.color = 'red';
+        statusEl.innerText = `❌ المستخدم ${uname} مُعين للتسجيل الدخول الدائم ولا يمكنه تسجيل الخروج يدويًا.`;
+        return;
+    }
 
     const logoutTimeMS = Date.now();
     const durationMS = logoutTimeMS - st.loginMS;
@@ -361,7 +394,7 @@ function logout() {
 // دالة الويب هوك الاحترافية
 // -----------------------
 function sendWebhookEmbed(staffObj, actionType, sessionTime = null) {
-    if (WEBHOOK_URL === "ضع_رابط_الويب_هوك_هنا" || !WEBHOOK_URL) {
+    if (WEBHOOK_URL === "ضع_رابط_الويب_هوك_هنا" || !WEBHOOK_URL || WEBHOOK_URL.includes("ptb.discord.com")) {
         console.warn("⚠️ لم يتم إرسال Webhook: يرجى وضع رابط Webhook صالح.");
         return;
     }
@@ -417,7 +450,7 @@ function sendWebhookEmbed(staffObj, actionType, sessionTime = null) {
 // -----------------------
 function updateAttendanceList() {
     const container = document.getElementById('attendanceList');
-    if (!container) return; // حماية من خطأ إذا لم يكن العنصر موجوداً
+    if (!container) return; 
 
     container.innerHTML = '';
 
@@ -444,11 +477,19 @@ function updateAttendanceList() {
 
         const loginTime = st.loginMS ? formatShortDate(st.loginMS) : '---';
         const logoutTime = st.logoutMS ? formatShortDate(st.logoutMS) : '---';
+        
+        // 💡 إضافة علامة بجوار الاسم للموظفين الدائمين
+        let permanentLabel = '';
+        if (s.username === PERMANENT_LOGIN_USER) {
+            permanentLabel = '<span style="color:#3d7fff; font-size:12px;"> (دخول دائم)</span>';
+        } else if (s.username === PERMANENT_LOGOUT_USER) {
+            permanentLabel = '<span style="color:#ff4b4b; font-size:12px;"> (خروج دائم)</span>';
+        }
 
         div.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="text-align:right;">
-                    <div><strong>${s.username}</strong> — <small>${s.rank}</small></div>
+                    <div><strong>${s.username}</strong>${permanentLabel} — <small>${s.rank}</small></div>
                     <div style="color:#bbb;font-size:13px;">📞 ${s.phone || '-'}</div>
                 </div>
                 <div style="text-align:left; min-width:140px;">
@@ -473,17 +514,17 @@ setInterval(updateAttendanceList, 1000);
 // المنيو والعروض (تحميل الجداول)
 // -----------------------------
 const menuItems = [
-    { name: "Latte", desc: "قهوة لاتيه بالحليب", price: "12 دولار" },
-    { name: "Cappuccino", desc: "كابتشينو كلاسيكي", price: "13 دولار" },
-    { name: "Spanish Latte", desc: "اسبانيش لاتيه بارد", price: "15 دولار" },
-    { name: "Hot Chocolate", desc: "هوت شوكلت", price: "10 دولار" },
-    { name: "Mocha", desc: "موكا ساخن", price: "14 دولار" },
+    { name: "Latte", desc: "قهوة لاتيه بالحليب", price: "12 ريال" },
+    { name: "Cappuccino", desc: "كابتشينو كلاسيكي", price: "13 ريال" },
+    { name: "Spanish Latte", desc: "اسبانيش لاتيه بارد", price: "15 ريال" },
+    { name: "Hot Chocolate", desc: "هوت شوكلت", price: "10 ريال" },
+    { name: "Mocha", desc: "موكا ساخن", price: "14 ريال" },
 ];
 
 const offers = [
-    { title: "باقة 65 كوب", desc: "اختر ما تشاء من المشروبات", price: "6000 دولار" },
-    { title: "باقة 45 كوب", desc: "مناسبة للفرق الصغيرة", price: "4000 دولار" },
-    { title: "باقة 30 كوب", desc: "اقتصادية وممتازة", price: "3000 دولار" },
+    { title: "باقة 65 كوب", desc: "اختر ما تشاء من المشروبات", price: "6000 ريال" },
+    { title: "باقة 45 كوب", desc: "مناسبة للفرق الصغيرة", price: "4000 ريال" },
+    { title: "باقة 30 كوب", desc: "اقتصادية وممتازة", price: "3000 ريال" },
 ];
 
 function loadMenu() {
@@ -556,6 +597,44 @@ function toggleSection(contentId, buttonId) {
 // -----------------------
 (function init() {
     loadStates();
+    
+    // ----------------------------------------------------
+    // 💡 تطبيق حالة التسجيل الدائم عند التحميل (مصّحح)
+    // ----------------------------------------------------
+    const permanentLoginAccount = staff.find(s => s.username === PERMANENT_LOGIN_USER);
+    if (permanentLoginAccount) {
+        // إذا كان الموظف مسجل دخول دائم، نحافظ على وقته السابق إذا كان موجودًا، وإلا نستخدم الوقت الحالي
+        const currentLoginTime = (states[PERMANENT_LOGIN_USER] && states[PERMANENT_LOGIN_USER].status === 'online')
+                                 ? states[PERMANENT_LOGIN_USER].loginMS
+                                 : Date.now();
+                                 
+        states[PERMANENT_LOGIN_USER] = {
+            username: PERMANENT_LOGIN_USER,
+            status: 'online',
+            loginMS: currentLoginTime, // استخدم الوقت الحالي أو المحفوظ
+            logoutMS: null,
+            rank: permanentLoginAccount.rank,
+            phone: permanentLoginAccount.phone
+        };
+    }
+    
+    const permanentLogoutAccount = staff.find(s => s.username === PERMANENT_LOGOUT_USER);
+    if (permanentLogoutAccount) {
+        // إذا كان الموظف مسجل خروج دائم، نقوم بتحديث حالته إلى "offline"
+        states[PERMANENT_LOGOUT_USER] = {
+            username: PERMANENT_LOGOUT_USER,
+            status: 'offline',
+            loginMS: null,
+            logoutMS: Date.now(), // نحدث وقت الخروج ليظهر أنه خارج الخدمة حاليًا
+            rank: permanentLogoutAccount.rank,
+            phone: permanentLogoutAccount.phone
+        };
+    }
+    
+    saveStates();
+    // ----------------------------------------------------
+
+
     updateAttendanceList();
     loadMenu(); 
     loadOffers();
@@ -584,4 +663,3 @@ function toggleSection(contentId, buttonId) {
 
 </body>
 </html>
-
